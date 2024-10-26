@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChartView 2.0</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <div id="sidebar">
+    <h2>📊 ChartView 2.0</h2>
+    <select id="tableSelect"></select>
+    <div id="stockInfo"></div>
+  </div>
+
+  <div id="chartContainer"></div>
+
+  <div class="bottom-navbar">
+    <button id="prevButton">←</button>
+    <span id="pageIndicator"></span>
+    <button id="nextButton">→</button>
+    <select id="intervalSelect"></select>
+    <select id="periodSelect"></select>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

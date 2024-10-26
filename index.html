@@ -4,187 +4,405 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChartView 2.0</title>
-    <!-- Move scripts to head with defer attribute -->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.1.1/lightweight-charts.standalone.production.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- Rest of the head content remains the same -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightweight-charts/4.1.1/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        /* Previous CSS styles remain the same */
+        :root {
+            --bs-body-bg: #1E222D;
+            --bs-body-color: #FFFFFF;
+            --up-color: #00ff55;
+            --down-color: #ed4807;
+        }
+
+        body {
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+        }
+
+        .sidebar {
+            background-color: #262b36;
+            border-right: 1px solid #363c4a;
+            height: 100vh;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #363c4a;
+            }
+        }
+
+        .form-select, .form-control {
+            background-color: #363c4a;
+            color: var(--bs-body-color);
+            border: 1px solid #464c5a;
+        }
+
+        .form-select:focus, .form-control:focus {
+            background-color: #363c4a;
+            color: var(--bs-body-color);
+            border-color: #565c6a;
+            box-shadow: 0 0 0 0.25rem rgba(70, 76, 90, 0.25);
+        }
+
+        .chart-container {
+            position: relative;
+            height: calc(100vh - 80px);
+        }
+
+        @media (max-width: 991.98px) {
+            .chart-container {
+                height: calc(100vh - 200px);
+            }
+        }
+
+        .bottom-navbar {
+            background-color: #262b36;
+            border-top: 1px solid #363c4a;
+        }
+
+        .btn-dark {
+            background-color: #363c4a;
+            border: none;
+        }
+
+        .btn-dark:hover:not(:disabled) {
+            background-color: #464c5a;
+        }
+
+        .btn-dark:disabled {
+            opacity: 0.5;
+        }
+
+        .stock-info {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background-color: rgba(38, 43, 54, 0.9);
+            padding: 1rem;
+            border-radius: 4px;
+            z-index: 100;
+        }
+
+        .change.positive {
+            background-color: var(--up-color);
+            color: #000;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .change.negative {
+            background-color: var(--down-color);
+            color: #fff;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+
+        .data-source-toggle {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background-color: #363c4a;
+            border-radius: 4px;
+        }
+
+        .csv-controls {
+            display: none;
+        }
+
+        .csv-controls.active {
+            display: block;
+        }
+
+        .api-controls {
+            display: block;
+        }
+
+        .api-controls.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <!-- Previous HTML content remains the same -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-xl-2 sidebar p-3">
+                <h1 class="h4 mb-3">📊 ChartView 2.0</h1>
+                
+                <!-- Data Source Toggle -->
+                <div class="data-source-toggle mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="dataSource" id="apiSource" value="api" checked>
+                        <label class="form-check-label" for="apiSource">
+                            Yahoo Finance API
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="dataSource" id="csvSource" value="csv">
+                        <label class="form-check-label" for="csvSource">
+                            Local CSV File
+                        </label>
+                    </div>
+                </div>
+
+                <!-- API Controls -->
+                <div class="api-controls">
+                    <select class="form-select mb-3" id="symbolSelect">
+                        <option value="AAPL">Apple Inc</option>
+                        <option value="MSFT">Microsoft</option>
+                        <option value="GOOGL">Google</option>
+                        <option value="AMZN">Amazon</option>
+                        <option value="META">Meta</option>
+                        <option value="NVDA">NVIDIA</option>
+                        <option value="TSLA">Tesla</option>
+                    </select>
+                </div>
+
+                <!-- CSV Controls -->
+                <div class="csv-controls">
+                    <input type="file" class="form-control mb-3" id="csvFile" accept=".csv">
+                    <div class="mb-3">
+                        <label class="form-label">Date Column</label>
+                        <select class="form-select" id="dateColumn"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Open Column</label>
+                        <select class="form-select" id="openColumn"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">High Column</label>
+                        <select class="form-select" id="highColumn"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Low Column</label>
+                        <select class="form-select" id="lowColumn"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Close Column</label>
+                        <select class="form-select" id="closeColumn"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Volume Column</label>
+                        <select class="form-select" id="volumeColumn"></select>
+                    </div>
+                    <button class="btn btn-primary w-100" id="loadCsvData">Load Data</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9 col-xl-10 p-0">
+                <div class="position-relative">
+                    <!-- Stock Info -->
+                    <div class="stock-info" id="stockInfo">
+                        <h2 class="h5 mb-2">Loading...</h2>
+                        <div class="price fs-4 mb-2">-</div>
+                        <div class="change">-</div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div id="chartContainer" class="chart-container"></div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="loading" style="display: none">
+                        <div class="spinner-border text-light me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Loading data...
+                    </div>
+
+                    <!-- Bottom Navigation -->
+                    <div class="bottom-navbar position-fixed bottom-0 w-100 p-3">
+                        <div class="container-fluid">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <div class="d-flex gap-2">
+                                        <select class="form-select" id="periodSelect">
+                                            <option value="1M">1 Month</option>
+                                            <option value="3M">3 Months</option>
+                                            <option value="6M">6 Months</option>
+                                            <option value="YTD">Year to Date</option>
+                                            <option value="1Y">1 Year</option>
+                                            <option value="2Y">2 Years</option>
+                                            <option value="5Y">5 Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2">
+                                        <select class="form-select" id="intervalSelect">
+                                            <option value="D">Daily</option>
+                                            <option value="W">Weekly</option>
+                                            <option value="M">Monthly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Wrap the entire script in a function that checks for required libraries
-        function initApp() {
-            if (typeof LightweightCharts === 'undefined') {
-                console.error('LightweightCharts library not loaded. Retrying in 100ms...');
-                setTimeout(initApp, 100);
-                return;
-            }
+        const TIME_PERIODS = {
+            '1M': '1mo',
+            '3M': '3mo',
+            '6M': '6mo',
+            'YTD': 'ytd',
+            '1Y': '1y',
+            '2Y': '2y',
+            '5Y': '5y'
+        };
 
-            if (typeof Papa === 'undefined') {
-                console.error('PapaParse library not loaded. Retrying in 100ms...');
-                setTimeout(initApp, 100);
-                return;
-            }
+        const INTERVALS = {
+            'D': '1d',
+            'W': '1wk',
+            'M': '1mo'
+        };
 
-            // Previous JavaScript constants and variables remain the same
-            const TIME_PERIODS = {
-                '1M': '1mo',
-                '3M': '3mo',
-                '6M': '6mo',
-                'YTD': 'ytd',
-                '1Y': '1y',
-                '2Y': '2y',
-                '5Y': '5y',
-                'MAX': 'max'
-            };
+        let chart = null;
+        let csvData = null;
 
-            const INTERVALS = {
-                'D': '1d',
-                'W': '1wk',
-                'M': '1mo'
-            };
+        function initChart() {
+            const chartContainer = document.getElementById('chartContainer');
+            chart = LightweightCharts.createChart(chartContainer, {
+                layout: {
+                    background: { color: '#1E222D' },
+                    textColor: '#FFFFFF',
+                },
+                grid: {
+                    vertLines: { visible: false },
+                    horzLines: { visible: false },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderVisible: false,
+                },
+                timeScale: {
+                    borderVisible: false,
+                    rightOffset: 5,
+                    barSpacing: 5,
+                },
+            });
 
-            let currentPage = 1;
-            let totalPages = 1;
-            let currentStocks = [];
-            let chart = null;
-
-            // Initialize chart function remains the same
-            function initChart() {
-                const chartContainer = document.getElementById('chartContainer');
-                chart = LightweightCharts.createChart(chartContainer, {
-                    layout: {
-                        background: { color: '#1E222D' },
-                        textColor: '#FFFFFF',
-                    },
-                    grid: {
-                        vertLines: { visible: false },
-                        horzLines: { visible: false },
-                    },
-                    crosshair: {
-                        mode: LightweightCharts.CrosshairMode.Normal,
-                    },
-                    rightPriceScale: {
-                        borderVisible: false,
-                    },
-                    timeScale: {
-                        borderVisible: false,
-                        rightOffset: 5,
-                        barSpacing: 5,
-                    },
-                });
-
-                // Make chart responsive
-                window.addEventListener('resize', () => {
-                    chart.applyOptions({
-                        width: chartContainer.clientWidth,
-                        height: chartContainer.clientHeight,
-                    });
-                });
-
-                // Initial resize
+            const handleResize = () => {
                 chart.applyOptions({
                     width: chartContainer.clientWidth,
                     height: chartContainer.clientHeight,
                 });
-            }
+            };
 
-            // Rest of the functions remain the same
-            async function loadCSVData(filename) {
-                try {
-                    const response = await fetch(`data/${filename}.csv`);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const csvText = await response.text();
-                    
-                    return new Promise((resolve) => {
-                        Papa.parse(csvText, {
-                            header: true,
-                            complete: (results) => {
-                                resolve(results.data.filter(row => row.symbol && row.name));
-                            }
-                        });
-                    });
-                } catch (error) {
-                    console.error('Error loading CSV:', error);
-                    // Return some default data if CSV fails to load
-                    return [
-                        { symbol: "RELIANCE", name: "Reliance Industries Ltd." },
-                        { symbol: "TCS", name: "Tata Consultancy Services Ltd." },
-                        { symbol: "HDFCBANK", name: "HDFC Bank Ltd." }
-                    ];
-                }
-            }
-
-            // Previous functions remain the same
-            async function fetchStockData(symbol, period, interval) {
-                document.getElementById('loadingIndicator').style.display = 'block';
-                try {
-                    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS?range=${period}&interval=${interval}`);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const data = await response.json();
-                    return data;
-                } catch (error) {
-                    console.error('Error fetching stock data:', error);
-                    return null;
-                } finally {
-                    document.getElementById('loadingIndicator').style.display = 'none';
-                }
-            }
-
-            // Rest of the functions remain the same
-
-            // Initialize the application with event handlers
-            async function init() {
-                initChart();
-                
-                // Set up event listeners
-                document.getElementById('indexSelect').addEventListener('change', (e) => {
-                    loadIndex(e.target.value);
-                });
-
-                document.getElementById('intervalSelect').addEventListener('change', () => {
-                    updatePage();
-                });
-
-                document.getElementById('periodSelect').addEventListener('change', () => {
-                    updatePage();
-                });
-
-                document.getElementById('prevButton').addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        updatePage();
-                    }
-                });
-
-                document.getElementById('nextButton').addEventListener('click', () => {
-                    if (currentPage < totalPages) {
-                        currentPage++;
-                        updatePage();
-                    }
-                });
-
-                // Load initial data
-                await loadIndex('nifty50');
-            }
-
-            // Initialize the app
-            init().catch(console.error);
+            window.addEventListener('resize', handleResize);
+            handleResize();
         }
 
-        // Start the application when the DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
+        async function fetchStockData(symbol, period, interval) {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            try {
+                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${interval}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+                return null;
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
         }
-    </script>
-</body>
-</html>
+
+        function formatChartData(data) {
+            if (!data || !data.chart || !data.chart.result || !data.chart.result[0]) {
+                return null;
+            }
+
+            const result = data.chart.result[0];
+            const quotes = result.indicators.quote[0];
+            const timestamps = result.timestamp;
+
+            return timestamps.map((time, i) => ({
+                time: time * 1000,
+                open: quotes.open[i],
+                high: quotes.high[i],
+                low: quotes.low[i],
+                close: quotes.close[i],
+                volume: quotes.volume[i],
+            }));
+        }
+
+        function formatCsvData(data, columns) {
+            return data.map(row => ({
+                time: new Date(row[columns.date]).getTime(),
+                open: parseFloat(row[columns.open]),
+                high: parseFloat(row[columns.high]),
+                low: parseFloat(row[columns.low]),
+                close: parseFloat(row[columns.close]),
+                volume: parseFloat(row[columns.volume])
+            })).filter(item => 
+                !isNaN(item.time) && 
+                !isNaN(item.open) && 
+                !isNaN(item.high) && 
+                !isNaN(item.low) && 
+                !isNaN(item.close) && 
+                !isNaN(item.volume)
+            );
+        }
+
+        function updateStockInfo(title, data) {
+            const stockInfo = document.getElementById('stockInfo');
+            if (!data || data.length === 0) {
+                stockInfo.innerHTML = `
+                    <h2 class="h5 mb-2">${title}</h2>
+                    <div class="price fs-4 mb-2">No data available</div>
+                `;
+                return;
+            }
+
+            const currentPrice = data[data.length - 1].close;
+            const previousClose = data[data.length - 2]?.close || data[data.length - 1].open;
+            const change = ((currentPrice - previousClose) / previousClose) * 100;
+
+            stockInfo.innerHTML = `
+                <h2 class="h5 mb-2">${title}</h2>
+                <div class="price fs-4 mb-2">$${currentPrice.toFixed(2)}</div>
+                <div class="change ${change >= 0 ? 'positive' : 'negative'}">
+                    ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                </div>
+            `;
+        }
+
+        function updateChartWithData(chartData, title) {
+            if (!chartData || chartData.length === 0) return;
+
+            if (chart) {
+                chart.removeSeries();
+            }
+
+            const candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#00ff55',
+                downColor: '#ed4807',
+                borderVisible: false,
+                wickUpColor: '#00ff55',
+                wickDownColor: '#ed4807',
+            });
+
+            candlestickSeries.setData(chartData);
+
+            const volumeSeries = chart.addHistogram

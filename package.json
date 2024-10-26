@@ -1,20 +1,9 @@
 {
-  "name": "stock-chart-app",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "lightweight-charts": "latest",
-    "axios": "latest",
-    "date-fns": "latest",
-    "csv-parse": "latest"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "papaparse": "^5.3.0",
+    "lightweight-charts": "^3.4.0"
   }
 }

@@ -1,5 +1,5 @@
-import { createChart } from 'chart.js';
-import { readCSV, fetchStockData } from 'dataFetcher.js';
+import { createChart } from './chart.js';
+import { readCSV, fetchStockData } from './dataFetcher.js';
 
 // Function to read CSV file
 async function readCSV(file) {

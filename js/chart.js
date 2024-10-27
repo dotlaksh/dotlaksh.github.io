@@ -10,22 +10,12 @@ export function createChart(symbol, data) {
             textColor: 'rgba(33, 56, 77, 1)',
         },
         grid: {
-            vertLines: {
-                color: 'rgba(197, 203, 206, 0.5)',
-            },
-            horzLines: {
-                color: 'rgba(197, 203, 206, 0.5)',
-            },
+            vertLines: { color: 'rgba(197, 203, 206, 0.5)' },
+            horzLines: { color: 'rgba(197, 203, 206, 0.5)' },
         },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        rightPriceScale: {
-            borderColor: 'rgba(197, 203, 206, 1)',
-        },
-        timeScale: {
-            borderColor: 'rgba(197, 203, 206, 1)',
-        },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        rightPriceScale: { borderColor: 'rgba(197, 203, 206, 1)' },
+        timeScale: { borderColor: 'rgba(197, 203, 206, 1)' },
     });
 
     const candleSeries = chart.addCandlestickSeries({
@@ -50,11 +40,10 @@ export function createChart(symbol, data) {
         },
     });
 
-    // Make the chart responsive
     window.addEventListener('resize', () => {
         chart.applyOptions({
             width: chartContainer.offsetWidth,
-            height: chartContainer.offsetHeight
+            height: chartContainer.offsetHeight,
         });
     });
 }
